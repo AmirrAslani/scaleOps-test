@@ -10,11 +10,19 @@ import IconLaptop from '@/components/Icon/IconLaptop';
 import IconUser from '@/components/Icon/IconUser';
 import IconLogout from '@/components/Icon/IconLogout';
 import { useRouter } from "next/router";
+import { useEffect, useState } from 'react';
 
 const Header = () => {
     const router = useRouter();
     const themeConfig = useSelector((state: IRootState) => state.themeConfig);
     const dispatch = useDispatch();
+
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    useEffect(() => {
+        const authToken = localStorage.getItem('authToken');
+        setIsAuthenticated(!!authToken);
+    }, []);
 
     const handleLogout = () => {
         localStorage.removeItem('authToken');
@@ -39,16 +47,6 @@ const Header = () => {
 
                         </button>
                     </div>
-                    {/*                     
-                    <div className="hidden ltr:mr-2 rtl:ml-2 sm:block">
-                        <ul className="flex items-center space-x-2 rtl:space-x-reverse dark:text-[#d0d2d6]">
-                            <li>
-                                <Link href="" className="block rounded-full bg-white-light/40 p-2 hover:bg-white-light/90 hover:text-primary dark:bg-dark/40 dark:hover:bg-dark/60">
-                                    lorem
-                                </Link>
-                            </li>
-                        </ul>
-                    </div> */}
 
                     <div className="flex items-center space-x-1.5 ltr:ml-auto rtl:mr-auto rtl:space-x-reverse dark:text-[#d0d2d6] sm:flex-1 ltr:sm:ml-0 sm:rtl:mr-0 lg:space-x-2">
                         <div className="sm:ltr:mr-auto sm:rtl:ml-auto">
@@ -89,6 +87,7 @@ const Header = () => {
                             )}
                         </div>
 
+                        {isAuthenticated && (
                         <div className="dropdown flex shrink-0">
                             <Dropdown
                                 offset={[0, 8]}
@@ -123,6 +122,7 @@ const Header = () => {
                                 </ul>
                             </Dropdown>
                         </div>
+                        )}
                     </div>
                 </div>
             </div>

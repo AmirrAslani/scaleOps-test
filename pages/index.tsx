@@ -53,10 +53,6 @@ const ProductCards: React.FC<{ product: Product }> = () => {
     const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
     const [sortOrder, setSortOrder] = useState<string>('');
 
-    // const handleAddToCartClick = (product: Product): void => {
-    //     setSelectedProduct(product);
-    //     setIsDialogOpen(true);
-    // };
     const handleAddToCartClick = (product: Product): void => {
         const authToken = localStorage.getItem('authToken');
         if (!authToken) {

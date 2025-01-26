@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 type Product = {
@@ -12,16 +11,22 @@ type Product = {
   image: string;
 };
 
+type CartItem = {
+  product: Product;
+  quantity: number;
+};
+
 const CartPage: React.FC = () => {
   const router = useRouter();
-  const [cartItems, setCartItems] = useState<Product[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
   useEffect(() => {
-    // چک کردن اینکه در محیط مرورگر هستیم
     if (typeof window !== 'undefined') {
       const storedCart = localStorage.getItem('cart');
       if (storedCart) {
-        setCartItems(JSON.parse(storedCart));
+        const parsedCart: Product[] = JSON.parse(storedCart);
+        const groupedCart = groupByProduct(parsedCart);
+        setCartItems(groupedCart);
       }
     }
   }, []);
@@ -32,24 +37,30 @@ const CartPage: React.FC = () => {
       router.push("/login");
     }
   }, [router]);
-  
+
+  const groupByProduct = (products: Product[]): CartItem[] => {
+    const grouped: { [key: number]: CartItem } = {};
+
+    products.forEach((product) => {
+      if (grouped[product.id]) {
+        grouped[product.id].quantity += 1;
+      } else {
+        grouped[product.id] = { product, quantity: 1 };
+      }
+    });
+
+    return Object.values(grouped);
+  };
+
   const handleRemoveFromCart = (productId: number): void => {
-    // خواندن سبد خرید از localStorage
     if (typeof window !== 'undefined') {
-      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-      // فیلتر کردن محصول برای حذف
-      const updatedCart = cart.filter((product: Product) => product.id !== productId);
-      // ذخیره سبد خرید جدید در localStorage
-      localStorage.setItem('cart', JSON.stringify(updatedCart));
-      setCartItems(updatedCart); // بروزرسانی state
-      toast.success('Product has been removed from your cart', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      const storedCart = localStorage.getItem('cart');
+      if (storedCart) {
+        const cart = JSON.parse(storedCart);
+        const updatedCart = cart.filter((product: Product) => product.id !== productId);
+        localStorage.setItem('cart', JSON.stringify(updatedCart));
+        setCartItems(groupByProduct(updatedCart));
+      }
     }
   };
 
@@ -59,9 +70,9 @@ const CartPage: React.FC = () => {
 
       {cartItems.length > 0 ? (
         <div>
-          {cartItems.map((product: Product, index: number) => (
+          {cartItems.map(({ product, quantity }, index) => (
             <div
-            key={`${product.id}-${index}`}
+              key={`${product.id}-${index}`}
               className="flex justify-between items-center bg-gray-100 p-4 mb-4 rounded-lg animate__animated animate__slideInRight"
             >
               <div className="flex items-center">
@@ -72,7 +83,8 @@ const CartPage: React.FC = () => {
                 />
                 <div>
                   <h3 className="font-semibold">{product.title}</h3>
-                  <p className="text-sm text-gray-600">${product.price}</p>
+                  <p className="text-sm text-gray-600">Price: ${product.price}</p>
+                  <p className="text-sm text-gray-600">Quantity: {quantity}</p>
                 </div>
               </div>
               <button
@@ -88,11 +100,14 @@ const CartPage: React.FC = () => {
               className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 focus:outline-none"
               onClick={() => router.push('/checkout')}
             >
-              Continue Shpoing
+              Continue Shopping
             </button>
             <p className="font-semibold">
               Total: $
-              {cartItems.reduce((total: number, product: Product) => total + product.price, 0)}
+              {cartItems.reduce(
+                (total, { product, quantity }) => total + product.price * quantity,
+                0
+              )}
             </p>
           </div>
         </div>
